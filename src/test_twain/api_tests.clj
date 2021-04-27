@@ -2,10 +2,11 @@
   (:require  [clj-http.client :as client]))
 
 
-(defn print-title [msg]
-  (println "")
-  (println msg)
-  (println (apply str (repeat (count msg) "="))))
+(defn print-title [& msgs]
+  (let [message (clojure.string/join " " msgs)]
+    (println "")
+    (println message)
+    (println (apply str (repeat (count message) "=")))))
 
 
 (defn print-assertion [msg cond]
@@ -24,7 +25,7 @@
 
 (defn call-to-auth [url]
   (let [endpoint (str url "/auth")]
-    (print-title (str "Calling endpoint " endpoint))
+    (print-title "Calling endpoint" endpoint)
 
     (let [response (client/get endpoint {:throw-exceptions false})]
       (print-assertion "GET call to /auth returns 405" (= (:status response) 405)))
@@ -33,14 +34,16 @@
           token (:token (:body response))]
       (print-assertion "POST call to /auth with username/password returns 200" (= (:status response) 200))
       (let [condition (and (string? token) (not (empty? token)))]
-      (print-assertion "POST call to /auth with username/password returns a valid Token" condition)))))
+        (print-assertion "POST call to /auth with username/password returns a valid Token" condition)))))
 
 
 (defn call-to-root [url]
   (let [endpoint (str url "/me")]
-    (print-title (str "Calling endpoint " endpoint))
+    (print-title "Calling endpoint" endpoint)
+
     (let [response (client/get endpoint {:throw-exceptions false})]
       (print-assertion "GET call to /me without token returns 401" (= (:status response) 401)))
+
     (let [token (:token (:body (get-token url)))
           response (client/get endpoint (into {:as :json} (header-token token)))
           condition (= (set (keys (:body response))) #{:user :files})]
@@ -53,5 +56,5 @@
         endpoint "http://localhost:5000/me"
         response (client/get endpoint (into {:as :json} (header-token token)))]
       (:body response))
-  (header-token "abc")
+  (print-title "abc" "def")
   )
